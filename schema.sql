@@ -45,3 +45,8 @@ CREATE OR REPLACE TRIGGER update_users_updated_at
 CREATE OR REPLACE TRIGGER update_issues_updated_at
   BEFORE UPDATE ON issues
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ── Index for faster reporter lookups
+CREATE INDEX IF NOT EXISTS idx_issues_reporter_id ON issues(reporter_id);
+CREATE INDEX IF NOT EXISTS idx_issues_status ON issues(status);
+CREATE INDEX IF NOT EXISTS idx_issues_type ON issues(type);
