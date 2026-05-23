@@ -2,8 +2,8 @@
 
 Internal Tech Issue & Feature Tracker — a collaborative platform for software teams to report bugs, suggest features, and coordinate resolutions.
 
-**Live URL:** https://your-deployment-url.vercel.app  
-**GitHub:** https://github.com/yourusername/devpulse
+**Live URL:** https://devpulse-assignment-mu.vercel.app/ 
+**GitHub:** https://github.com/sumonmia100/DEVPULSE_Assignment
 
 ---
 
