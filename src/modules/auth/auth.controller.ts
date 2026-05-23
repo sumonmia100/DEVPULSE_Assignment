@@ -14,10 +14,31 @@ const SALT_ROUNDS = 10;
 export const signup = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password, role }: SignupBody = req.body;
+    const trimmedName = name?.trim();
+    const trimmedEmail = email?.trim().toLowerCase();
 
     //Validate required fields
-    if (!name || !email || !password) {
+    if (!trimmedName || !trimmedEmail || !password) {
       sendError(res, StatusCodes.BAD_REQUEST, 'Name, email, and password are required.');
+      return;
+    }
+
+    // Validate name length
+    if (trimmedName.length < 2) {
+      sendError(res, StatusCodes.BAD_REQUEST, 'Name must be at least 2 characters.');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      sendError(res, StatusCodes.BAD_REQUEST, 'Invalid email format.');
+      return;
+    }
+
+    // Validate password minimum length
+    if (password.length < 8) {
+      sendError(res, StatusCodes.BAD_REQUEST, 'Password must be at least 8 characters.');
       return;
     }
 
@@ -30,7 +51,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
     //Check for duplicate email
     const existingUser = await pool.query(
       'SELECT id FROM users WHERE email = $1',
-      [email]
+      [trimmedEmail]
     );
 
     if (existingUser.rows.length > 0) {
@@ -46,7 +67,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
       `INSERT INTO users (name, email, password, role)
        VALUES ($1, $2, $3, $4)
        RETURNING id, name, email, role, created_at, updated_at`,
-      [name, email, hashedPassword, role ?? 'contributor']
+      [trimmedName, trimmedEmail, hashedPassword, role ?? 'contributor']
     );
 
     sendSuccess(res, StatusCodes.CREATED, 'User registered successfully', result.rows[0]);
@@ -70,7 +91,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // ── Fetch user including password for comparison
     const result = await pool.query(
       'SELECT * FROM users WHERE email = $1',
-      [email]
+      [email.trim().toLowerCase()]
     );
 
     const user: UserRecord = result.rows[0];
@@ -101,6 +122,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     sendSuccess(res, StatusCodes.OK, 'Login successful', {
       token,
+      expiresIn: '7d',
       user: userWithoutPassword,
     });
   } catch (error) {
