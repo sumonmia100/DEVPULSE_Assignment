@@ -50,12 +50,15 @@ export const createIssue = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    if (title.length > 150) {
+    const trimmedTitle = title.trim();
+    const trimmedDescription = description.trim();
+
+    if (trimmedTitle.length > 150) {
       sendError(res, StatusCodes.BAD_REQUEST, 'Title must not exceed 150 characters.');
       return;
     }
 
-    if (description.length < 20) {
+    if (trimmedDescription.length < 20) {
       sendError(res, StatusCodes.BAD_REQUEST, 'Description must be at least 20 characters.');
       return;
     }
@@ -69,7 +72,7 @@ export const createIssue = async (req: Request, res: Response): Promise<void> =>
 
     const result = await pool.query<IssueRecord>(
       'INSERT INTO issues (title, description, type, reporter_id) VALUES ($1, $2, $3, $4) RETURNING *',
-      [title, description, type, reporter_id]
+      [trimmedTitle, trimmedDescription, type, reporter_id]
     );
 
     sendSuccess(res, StatusCodes.CREATED, 'Issue created successfully', result.rows[0]);
@@ -83,6 +86,12 @@ export const createIssue = async (req: Request, res: Response): Promise<void> =>
 export const getAllIssues = async (req: Request, res: Response): Promise<void> => {
   try {
     const { sort, type, status }: IssueQueryParams = req.query as IssueQueryParams;
+
+    // Validate sort param
+    if (sort && sort !== 'newest' && sort !== 'oldest') {
+      sendError(res, StatusCodes.BAD_REQUEST, 'Sort must be newest or oldest.');
+      return;
+    }
 
     let query = 'SELECT * FROM issues';
     const params: string[] = [];
